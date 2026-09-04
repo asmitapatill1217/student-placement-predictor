@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Register &mdash; Placement Predictor{% endblock %}
+{% block content %}
+
+<section class="section" style="padding-top:0;">
+  <h2>Student Registration</h2>
+  <p class="muted">Your details are used to generate your placement prediction and Placement ID.</p>
+
+  <form class="panel" method="POST" enctype="multipart/form-data" style="margin-top:20px;">
+    <h3 class="mt-0" style="font-size:1.05rem;">Account</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" name="full_name" required>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" name="email">
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" name="username" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" required>
+      </div>
+    </div>
+
+    <h3 style="font-size:1.05rem; margin-top:30px;">Academic Record</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label>10th Percentage</label>
+        <input type="number" step="0.01" min="0" max="100" name="tenth_percent" required>
+      </div>
+      <div class="field">
+        <label>12th Percentage</label>
+        <input type="number" step="0.01" min="0" max="100" name="twelfth_percent" required>
+      </div>
+      <div class="field">
+        <label>Degree</label>
+        <select name="degree" required>
+          <option value="B.Tech">B.Tech</option>
+          <option value="B.Sc">B.Sc</option>
+          <option value="BCA">BCA</option>
+          <option value="M.Tech">M.Tech</option>
+          <option value="MCA">MCA</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>CGPA (out of 10)</label>
+        <input type="number" step="0.01" min="0" max="10" name="cgpa" required>
+      </div>
+    </div>
+
+    <h3 style="font-size:1.05rem; margin-top:30px;">Profile</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label>Number of Internships</label>
+        <input type="number" min="0" max="10" name="internships" value="0" required>
+      </div>
+      <div class="field">
+        <label>Number of Projects</label>
+        <input type="number" min="0" max="15" name="projects" value="0" required>
+      </div>
+      <div class="field">
+        <label>Active Backlogs</label>
+        <input type="number" min="0" max="10" name="backlogs" value="0" required>
+      </div>
+      <div class="field">
+        <label>Communication Skill (1&ndash;10 self-rating)</label>
+        <input type="number" min="1" max="10" name="communication_skill" value="6" required>
+      </div>
+      <div class="field">
+        <label>Extra-curricular Activities</label>
+        <select name="extra_curricular">
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Area of Interest</label>
+        <select name="interest">
+          <option>Web Development</option>
+          <option>Data Science</option>
+          <option>Machine Learning</option>
+          <option>Core/Mechanical</option>
+          <option>Networking</option>
+          <option>Testing</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Upload Resume / CV (PDF or Word)</label>
+        <input type="file" name="resume" accept=".pdf,.doc,.docx">
+        <p class="hint">Max 5MB. The placement cell can view this from the admin dashboard.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;">
+      <button type="submit" class="btn btn-gold">Register &amp; Get Prediction</button>
+    </div>
+  </form>
+</section>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Complaint Box{% endblock %}
+{% block content %}
+
+<section class="section" style="padding-top:0;">
+  <h2 class="mt-0">Complaint Box</h2>
+  <p class="muted">Student queries and complaints submitted from their dashboard.</p>
+
+  {% for c in complaints %}
+  <div class="panel" style="margin-top:18px;">
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <div>
+        <b>{{ c.subject }}</b>
+        <span class="muted"> &mdash; {{ c.full_name }} ({{ c.placement_id }})</span>
+      </div>
+      <span class="badge {{ 'good' if c.status=='Resolved' else 'warn' }}">{{ c.status }}</span>
+    </div>
+    <p style="margin:10px 0;">{{ c.message }}</p>
+    <p class="muted" style="font-size:0.8rem;">Submitted: {{ c.created_at }}</p>
+
+    <form method="POST" style="margin-top:14px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+      <input type="hidden" name="complaint_id" value="{{ c.id }}">
+      <div class="field" style="flex:1; min-width:220px; margin:0;">
+        <label>Reply</label>
+        <input type="text" name="reply" value="{{ c.admin_reply or '' }}">
+      </div>
+      <div class="field" style="margin:0;">
+        <label>Status</label>
+        <select name="status">
+          <option value="Open" {{ 'selected' if c.status=='Open' }}>Open</option>
+          <option value="In Progress" {{ 'selected' if c.status=='In Progress' }}>In Progress</option>
+          <option value="Resolved" {{ 'selected' if c.status=='Resolved' }}>Resolved</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="muted" style="margin-top:20px;">No complaints submitted yet.</p>
+  {% endfor %}
+</section>
+
+{% endblock %}

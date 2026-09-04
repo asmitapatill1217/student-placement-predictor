@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+
+<section class="section" style="padding-top:0;">
+  <h2 class="mt-0">Placement Cell Dashboard</h2>
+
+  <div class="stat-row">
+    <div class="stat"><span class="num">{{ stats.total }}</span><span class="label">Registered Students</span></div>
+    <div class="stat good"><span class="num">{{ stats.placed }}</span><span class="label">Predicted Placed</span></div>
+    <div class="stat bad"><span class="num">{{ stats.not_placed }}</span><span class="label">Needs Improvement</span></div>
+    <div class="stat gold"><span class="num">{{ stats.open_complaints }}</span><span class="label">Open Complaints</span></div>
+    <div class="stat"><span class="num">{{ stats.model_accuracy }}%</span><span class="label">Model Accuracy</span></div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <h3 class="mt-0" style="font-size:1.05rem;">All Registered Students</h3>
+      <a href="{{ url_for('admin_reports') }}" class="btn btn-outline btn-sm">Open Date-wise Reports</a>
+    </div>
+    <table>
+      <tr>
+        <th>ID</th><th>Name</th><th>Degree</th><th>CGPA</th><th>Prediction</th>
+        <th>Confidence</th><th>Status</th><th>Resume</th><th></th>
+      </tr>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.placement_id }}</td>
+        <td>{{ s.full_name }}</td>
+        <td>{{ s.degree }}</td>
+        <td>{{ s.cgpa }}</td>
+        <td>
+          <span class="badge {{ 'good' if s.prediction_result=='Likely to be Placed' else 'bad' }}">
+            {{ s.prediction_result }}
+          </span>
+        </td>
+        <td>{{ s.prediction_prob }}%</td>
+        <td><span class="badge {{ 'good' if s.status=='Shortlisted' else ('bad' if s.status=='Rejected' else 'warn') }}">{{ s.status }}</span></td>
+        <td>
+          {% if s.resume_filename %}
+            <a href="{{ url_for('uploaded_file', filename=s.resume_filename) }}" target="_blank">View CV</a>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td><a href="{{ url_for('admin_student_detail', student_id=s.id) }}" class="btn btn-sm btn-primary">Review</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="muted">No students registered yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="panel" style="margin-top:24px;">
+    <h3 class="mt-0" style="font-size:1.05rem;">Placement Analytics</h3>
+    <div class="graph-grid">
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/placement_pie.png') }}" alt="Placement distribution">
+        <figcaption>Overall placement distribution</figcaption>
+      </figure>
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/correlation_heatmap.png') }}" alt="Correlation heatmap">
+        <figcaption>Feature correlation with placement outcome</figcaption>
+      </figure>
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/cgpa_box.png') }}" alt="CGPA vs placement">
+        <figcaption>CGPA spread across placed / not placed</figcaption>
+      </figure>
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/internship_bar.png') }}" alt="Internship vs placement rate">
+        <figcaption>Placement rate by internship count</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

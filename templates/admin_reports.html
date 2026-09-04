@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+
+<section class="section" style="padding-top:0;">
+  <h2 class="mt-0">Date-wise Registration Reports</h2>
+
+  <form class="panel" method="GET" style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+    <div class="field" style="margin:0;">
+      <label>Filter by Date</label>
+      <input type="date" name="date" value="{{ date_filter }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('admin_reports') }}" class="btn btn-outline">Clear</a>
+  </form>
+
+  <div class="panel" style="margin-top:20px;">
+    <p class="muted">{{ students|length }} record(s) {% if date_filter %}for {{ date_filter }}{% endif %}</p>
+    <table>
+      <tr>
+        <th>Date Registered</th><th>ID</th><th>Name</th><th>Degree</th><th>CGPA</th>
+        <th>Prediction</th><th>Confidence</th><th>Status</th>
+      </tr>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.created_at }}</td>
+        <td>{{ s.placement_id }}</td>
+        <td>{{ s.full_name }}</td>
+        <td>{{ s.degree }}</td>
+        <td>{{ s.cgpa }}</td>
+        <td><span class="badge {{ 'good' if s.prediction_result=='Likely to be Placed' else 'bad' }}">{{ s.prediction_result }}</span></td>
+        <td>{{ s.prediction_prob }}%</td>
+        <td>{{ s.status }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted">No records found.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</section>
+
+{% endblock %}

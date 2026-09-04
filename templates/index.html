@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Campus Placement Predictor{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="eyebrow">Placement Cell &middot; Prediction &amp; Tracking Portal</div>
+  <h1>Know your placement readiness before the interview does.</h1>
+  <p class="lede">
+    Students register once with their academic record and resume. The system predicts placement
+    likelihood instantly using a trained machine learning model, and the placement cell reviews,
+    remarks on, and tracks every candidate from one dashboard.
+  </p>
+  <div class="hero-actions">
+    <a href="{{ url_for('register') }}" class="btn btn-gold">Register as Student</a>
+    <a href="{{ url_for('student_login') }}" class="btn btn-outline">Student Login</a>
+    <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="two-col">
+    <div class="panel">
+      <h3>For Students</h3>
+      <p class="muted">
+        Fill in your 10th &amp; 12th marks, degree, CGPA, internships and interest area, upload your
+        resume (CV), and get an instant prediction with a confidence score. Track admin remarks and
+        raise a complaint or query any time.
+      </p>
+    </div>
+    <div class="panel">
+      <h3>For the Placement Cell</h3>
+      <p class="muted">
+        View every registered candidate, open their resume, add remarks or shortlist notes, filter
+        reports by date, resolve student complaints, and see placement trends on live graphs.
+      </p>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

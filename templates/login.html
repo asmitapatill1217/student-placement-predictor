@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Student Login{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:0; max-width:440px; margin:0 auto;">
+  <h2>Student Login</h2>
+  <form class="panel" method="POST">
+    <div class="field" style="margin-bottom:18px;">
+      <label>Username</label>
+      <input type="text" name="username" required>
+    </div>
+    <div class="field" style="margin-bottom:22px;">
+      <label>Password</label>
+      <input type="password" name="password" required>
+    </div>
+    <button type="submit" class="btn btn-gold" style="width:100%;">Log in</button>
+  </form>
+  <p class="muted" style="margin-top:16px;">New here? <a href="{{ url_for('register') }}">Register as a student</a></p>
+</section>
+{% endblock %}

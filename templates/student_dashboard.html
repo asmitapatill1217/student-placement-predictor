@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+
+<section class="section" style="padding-top:0;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <h2 class="mt-0">Welcome, {{ student.full_name }}</h2>
+      <span class="id-chip">{{ student.placement_id }}</span>
+    </div>
+    <a href="{{ url_for('complaint') }}" class="btn btn-outline">Raise a Complaint / Query</a>
+  </div>
+
+  <div class="two-col" style="margin-top:28px;">
+    <div class="panel result-box {{ 'bad' if student.prediction_result != 'Likely to be Placed' }}">
+      <div class="result-title">{{ student.prediction_result }}</div>
+      <p class="muted">Model confidence</p>
+      <div class="prob-bar-track"><div class="prob-bar-fill" style="width:{{ student.prediction_prob }}%;"></div></div>
+      <p><b>{{ student.prediction_prob }}%</b> chance of placement</p>
+      {% if student.predicted_package and student.predicted_package > 0 %}
+        <p class="muted">Estimated package range: <b>~{{ student.predicted_package }} LPA</b></p>
+      {% endif %}
+      <p class="muted" style="margin-top:14px; font-size:0.85rem;">
+        Status: <span class="badge {{ 'good' if student.status=='Shortlisted' else ('bad' if student.status=='Rejected' else 'warn') }}">{{ student.status }}</span>
+      </p>
+    </div>
+
+    <div class="panel">
+      <h3 class="mt-0" style="font-size:1.05rem;">Your Profile</h3>
+      <table>
+        <tr><td class="muted">10th %</td><td>{{ student.tenth_percent }}</td></tr>
+        <tr><td class="muted">12th %</td><td>{{ student.twelfth_percent }}</td></tr>
+        <tr><td class="muted">Degree</td><td>{{ student.degree }}</td></tr>
+        <tr><td class="muted">CGPA</td><td>{{ student.cgpa }}</td></tr>
+        <tr><td class="muted">Internships</td><td>{{ student.internships }}</td></tr>
+        <tr><td class="muted">Projects</td><td>{{ student.projects }}</td></tr>
+        <tr><td class="muted">Backlogs</td><td>{{ student.backlogs }}</td></tr>
+        <tr><td class="muted">Interest</td><td>{{ student.interest }}</td></tr>
+        <tr><td class="muted">Resume</td>
+          <td>
+            {% if student.resume_filename %}
+              <a href="{{ url_for('uploaded_file', filename=student.resume_filename) }}" target="_blank">View uploaded CV</a>
+            {% else %}
+              <span class="muted">Not uploaded</span>
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  {% if student.admin_remark %}
+  <div class="panel remark-box" style="margin-top:24px;">
+    <b>Remark from Placement Cell:</b><br>{{ student.admin_remark }}
+  </div>
+  {% endif %}
+
+  <div class="panel" style="margin-top:24px;">
+    <h3 class="mt-0" style="font-size:1.05rem;">Placement Trends</h3>
+    <div class="graph-grid">
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/placement_pie.png') }}" alt="Placement distribution">
+        <figcaption>Overall placement distribution across all registered students</figcaption>
+      </figure>
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/cgpa_box.png') }}" alt="CGPA vs placement">
+        <figcaption>CGPA is one of the strongest predictors of placement</figcaption>
+      </figure>
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/internship_bar.png') }}" alt="Internship vs placement rate">
+        <figcaption>Placement rate rises sharply with internship experience</figcaption>
+      </figure>
+      <figure class="graph-card">
+        <img src="{{ url_for('static', filename='graphs/package_hist.png') }}" alt="Package distribution">
+        <figcaption>Package distribution among placed students</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:24px;">
+    <h3 class="mt-0" style="font-size:1.05rem;">Your Complaints / Queries</h3>
+    {% if complaints %}
+      <table>
+        <tr><th>Date</th><th>Subject</th><th>Status</th><th>Admin Reply</th></tr>
+        {% for c in complaints %}
+        <tr>
+          <td>{{ c.created_at }}</td>
+          <td>{{ c.subject }}</td>
+          <td><span class="badge {{ 'good' if c.status=='Resolved' else 'warn' }}">{{ c.status }}</span></td>
+          <td>{{ c.admin_reply or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p class="muted">No complaints raised yet.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

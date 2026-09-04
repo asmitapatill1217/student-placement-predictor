@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Placement Predictor{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="{{ url_for('home') }}" class="brand">
+      <span class="mark">P</span> Campus Placement Predictor
+    </a>
+    <div class="nav-links">
+      {% if session.get('student_id') %}
+        <a href="{{ url_for('student_dashboard') }}">My Dashboard</a>
+        <a href="{{ url_for('logout') }}">Log out</a>
+      {% elif session.get('admin_id') %}
+        <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+        <a href="{{ url_for('admin_reports') }}">Reports</a>
+        <a href="{{ url_for('admin_complaints') }}">Complaints</a>
+        <a href="{{ url_for('admin_logout') }}">Log out</a>
+      {% else %}
+        <a href="{{ url_for('student_login') }}">Student Login</a>
+        <a href="{{ url_for('admin_login') }}">Admin Login</a>
+        <a href="{{ url_for('register') }}" class="cta">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:28px;">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<footer>
+  Campus Placement Predictor &mdash; built with Flask, scikit-learn &amp; pandas.
+</footer>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Review {{ student.full_name }}{% endblock %}
+{% block content %}
+
+<section class="section" style="padding-top:0;">
+  <a href="{{ url_for('admin_dashboard') }}" class="muted">&larr; Back to dashboard</a>
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:10px;">
+    <div>
+      <h2 class="mt-0">{{ student.full_name }}</h2>
+      <span class="id-chip">{{ student.placement_id }}</span>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:24px;">
+    <div class="panel">
+      <h3 class="mt-0" style="font-size:1.05rem;">Academic &amp; Profile Details</h3>
+      <table>
+        <tr><td class="muted">Email</td><td>{{ student.email or '—' }}</td></tr>
+        <tr><td class="muted">10th %</td><td>{{ student.tenth_percent }}</td></tr>
+        <tr><td class="muted">12th %</td><td>{{ student.twelfth_percent }}</td></tr>
+        <tr><td class="muted">Degree</td><td>{{ student.degree }}</td></tr>
+        <tr><td class="muted">CGPA</td><td>{{ student.cgpa }}</td></tr>
+        <tr><td class="muted">Internships</td><td>{{ student.internships }}</td></tr>
+        <tr><td class="muted">Projects</td><td>{{ student.projects }}</td></tr>
+        <tr><td class="muted">Backlogs</td><td>{{ student.backlogs }}</td></tr>
+        <tr><td class="muted">Communication Skill</td><td>{{ student.communication_skill }}/10</td></tr>
+        <tr><td class="muted">Extra-curricular</td><td>{{ 'Yes' if student.extra_curricular else 'No' }}</td></tr>
+        <tr><td class="muted">Interest</td><td>{{ student.interest }}</td></tr>
+        <tr><td class="muted">Registered on</td><td>{{ student.created_at }}</td></tr>
+        <tr><td class="muted">Resume</td>
+          <td>
+            {% if student.resume_filename %}
+              <a href="{{ url_for('uploaded_file', filename=student.resume_filename) }}" target="_blank">Open CV</a>
+            {% else %}<span class="muted">Not uploaded</span>{% endif %}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div>
+      <div class="panel result-box {{ 'bad' if student.prediction_result != 'Likely to be Placed' }}">
+        <div class="result-title">{{ student.prediction_result }}</div>
+        <div class="prob-bar-track"><div class="prob-bar-fill" style="width:{{ student.prediction_prob }}%;"></div></div>
+        <p><b>{{ student.prediction_prob }}%</b> model confidence</p>
+        {% if student.predicted_package and student.predicted_package > 0 %}
+          <p class="muted">Estimated package: ~{{ student.predicted_package }} LPA</p>
+        {% endif %}
+      </div>
+
+      <form method="POST" class="panel" style="margin-top:24px;">
+        <h3 class="mt-0" style="font-size:1.05rem;">Add Remark / Update Status</h3>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Status</label>
+          <select name="status">
+            {% for opt in ['Pending Review','Shortlisted','Rejected','Interview Scheduled'] %}
+              <option value="{{ opt }}" {{ 'selected' if student.status==opt }}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:18px;">
+          <label>Remark to student</label>
+          <textarea name="remark">{{ student.admin_remark or '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-gold">Save</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
