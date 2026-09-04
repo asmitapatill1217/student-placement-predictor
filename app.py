@@ -24,7 +24,10 @@ app.secret_key = os.environ.get("SECRET_KEY", "placement-predictor-secret-key-ch
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
 
-init_db()  # safe: CREATE TABLE IF NOT EXISTS
+try:
+    init_db()
+except Exception as e:
+    print(f"DB init failed: {e}")
 
 # ---------- Load ML model ----------
 MODEL_DIR = os.path.join(BASE, "model")
