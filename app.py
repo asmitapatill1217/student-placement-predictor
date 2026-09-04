@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
-from db import get_db, init_db, DB_PATH
+from db import get_db, init_db
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
@@ -24,10 +24,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "placement-predictor-secret-key-ch
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
 
-if not os.path.exists(DB_PATH):
-    init_db()
-else:
-    init_db()  # safe: CREATE TABLE IF NOT EXISTS
+init_db()  # safe: CREATE TABLE IF NOT EXISTS
 
 # ---------- Load ML model ----------
 MODEL_DIR = os.path.join(BASE, "model")
@@ -76,9 +73,12 @@ def register():
         email = f.get("email", "").strip()
 
         db = get_db()
-        existing = db.execute("SELECT id FROM students WHERE username=?", (username,)).fetchone()
+        cur = db.cursor()
+        cur.execute("SELECT id FROM students WHERE username=%s", (username,))
+        existing = cur.fetchone()
         if existing:
             flash("Username already taken. Please choose another.", "error")
+            cur.close()
             db.close()
             return render_template("register.html")
 
@@ -87,6 +87,7 @@ def register():
         if file and file.filename:
             if not allowed_file(file.filename):
                 flash("Resume must be a PDF or Word document.", "error")
+                cur.close()
                 db.close()
                 return render_template("register.html")
             safe_name = secure_filename(f"{username}_{uuid.uuid4().hex[:6]}_{file.filename}")
@@ -106,13 +107,13 @@ def register():
         result, prob, package = run_prediction(row)
         placement_id = generate_placement_id()
 
-        db.execute("""
+        cur.execute("""
             INSERT INTO students (
                 placement_id, username, password, full_name, email,
                 tenth_percent, twelfth_percent, degree, cgpa,
                 internships, projects, backlogs, communication_skill, extra_curricular,
                 interest, resume_filename, prediction_result, prediction_prob, predicted_package
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             placement_id, username, generate_password_hash(password), full_name, email,
             row["tenth_percent"], row["twelfth_percent"], f.get("degree"), row["cgpa"],
@@ -120,6 +121,7 @@ def register():
             f.get("interest"), resume_filename, result, prob, package,
         ))
         db.commit()
+        cur.close()
         db.close()
 
         flash(f"Registration successful! Your Placement ID is {placement_id}. Please log in.", "success")
@@ -134,7 +136,10 @@ def student_login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         db = get_db()
-        student = db.execute("SELECT * FROM students WHERE username=?", (username,)).fetchone()
+        cur = db.cursor()
+        cur.execute("SELECT * FROM students WHERE username=%s", (username,))
+        student = cur.fetchone()
+        cur.close()
         db.close()
         if student and check_password_hash(student["password"], password):
             session["student_id"] = student["id"]
@@ -162,10 +167,14 @@ def student_dashboard():
     if not require_student():
         return redirect(url_for("student_login"))
     db = get_db()
-    student = db.execute("SELECT * FROM students WHERE id=?", (session["student_id"],)).fetchone()
-    complaints = db.execute(
-        "SELECT * FROM complaints WHERE student_id=? ORDER BY created_at DESC", (session["student_id"],)
-    ).fetchall()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM students WHERE id=%s", (session["student_id"],))
+    student = cur.fetchone()
+    cur.execute(
+        "SELECT * FROM complaints WHERE student_id=%s ORDER BY created_at DESC", (session["student_id"],)
+    )
+    complaints = cur.fetchall()
+    cur.close()
     db.close()
     return render_template("student_dashboard.html", student=student, complaints=complaints)
 
@@ -178,11 +187,13 @@ def complaint():
         subject = request.form.get("subject", "").strip()
         message = request.form.get("message", "").strip()
         db = get_db()
-        db.execute(
-            "INSERT INTO complaints (student_id, subject, message) VALUES (?,?,?)",
+        cur = db.cursor()
+        cur.execute(
+            "INSERT INTO complaints (student_id, subject, message) VALUES (%s,%s,%s)",
             (session["student_id"], subject, message),
         )
         db.commit()
+        cur.close()
         db.close()
         flash("Your complaint/query has been submitted to the admin.", "success")
         return redirect(url_for("student_dashboard"))
@@ -197,7 +208,10 @@ def admin_login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         db = get_db()
-        admin = db.execute("SELECT * FROM admin WHERE username=?", (username,)).fetchone()
+        cur = db.cursor()
+        cur.execute("SELECT * FROM admin WHERE username=%s", (username,))
+        admin = cur.fetchone()
+        cur.close()
         db.close()
         if admin and check_password_hash(admin["password"], password):
             session["admin_id"] = admin["id"]
@@ -215,11 +229,15 @@ def admin_dashboard():
     if not require_admin():
         return redirect(url_for("admin_login"))
     db = get_db()
-    students = db.execute("SELECT * FROM students ORDER BY created_at DESC").fetchall()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM students ORDER BY created_at DESC")
+    students = cur.fetchall()
     total = len(students)
     placed = len([s for s in students if s["prediction_result"] == "Likely to be Placed"])
     not_placed = total - placed
-    open_complaints = db.execute("SELECT COUNT(*) c FROM complaints WHERE status='Open'").fetchone()["c"]
+    cur.execute("SELECT COUNT(*) c FROM complaints WHERE status='Open'")
+    open_complaints = cur.fetchone()["c"]
+    cur.close()
     db.close()
     stats = dict(total=total, placed=placed, not_placed=not_placed, open_complaints=open_complaints,
                  model_accuracy=MODEL_ACCURACY)
@@ -231,13 +249,16 @@ def admin_student_detail(student_id):
     if not require_admin():
         return redirect(url_for("admin_login"))
     db = get_db()
+    cur = db.cursor()
     if request.method == "POST":
         remark = request.form.get("remark", "").strip()
         status = request.form.get("status", "Pending Review")
-        db.execute("UPDATE students SET admin_remark=?, status=? WHERE id=?", (remark, status, student_id))
+        cur.execute("UPDATE students SET admin_remark=%s, status=%s WHERE id=%s", (remark, status, student_id))
         db.commit()
         flash("Remark saved.", "success")
-    student = db.execute("SELECT * FROM students WHERE id=?", (student_id,)).fetchone()
+    cur.execute("SELECT * FROM students WHERE id=%s", (student_id,))
+    student = cur.fetchone()
+    cur.close()
     db.close()
     if not student:
         return "Student not found", 404
@@ -249,12 +270,15 @@ def admin_reports():
     if not require_admin():
         return redirect(url_for("admin_login"))
     db = get_db()
-    students = db.execute("SELECT * FROM students ORDER BY created_at DESC").fetchall()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM students ORDER BY created_at DESC")
+    students = cur.fetchall()
+    cur.close()
     db.close()
 
     date_filter = request.args.get("date")
     if date_filter:
-        students = [s for s in students if s["created_at"].startswith(date_filter)]
+        students = [s for s in students if str(s["created_at"]).startswith(date_filter)]
 
     return render_template("admin_reports.html", students=students, date_filter=date_filter or "")
 
@@ -264,19 +288,22 @@ def admin_complaints():
     if not require_admin():
         return redirect(url_for("admin_login"))
     db = get_db()
+    cur = db.cursor()
     if request.method == "POST":
         complaint_id = request.form.get("complaint_id")
         reply = request.form.get("reply", "").strip()
         status = request.form.get("status", "Open")
-        db.execute(
-            "UPDATE complaints SET admin_reply=?, status=? WHERE id=?", (reply, status, complaint_id)
+        cur.execute(
+            "UPDATE complaints SET admin_reply=%s, status=%s WHERE id=%s", (reply, status, complaint_id)
         )
         db.commit()
-    rows = db.execute("""
+    cur.execute("""
         SELECT c.*, s.full_name, s.placement_id
         FROM complaints c JOIN students s ON c.student_id = s.id
         ORDER BY c.created_at DESC
-    """).fetchall()
+    """)
+    rows = cur.fetchall()
+    cur.close()
     db.close()
     return render_template("admin_complaints.html", complaints=rows)
 
