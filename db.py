@@ -1,18 +1,13 @@
-import sqlite3
 import os
+import psycopg2
+import psycopg2.extras
 from werkzeug.security import generate_password_hash
 
-BASE = os.path.dirname(os.path.abspath(__file__))
-
-if os.environ.get("VERCEL"):
-    DB_PATH = "/tmp/placement.db"
-else:
-    DB_PATH = os.path.join(BASE, "placement.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
     return conn
 
 
@@ -22,7 +17,7 @@ def init_db():
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             placement_id TEXT UNIQUE NOT NULL,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
@@ -44,43 +39,42 @@ def init_db():
             predicted_package REAL,
             admin_remark TEXT,
             status TEXT DEFAULT 'Pending Review',
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT NOW()
         )
     """)
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS complaints (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id),
             subject TEXT,
             message TEXT NOT NULL,
             status TEXT DEFAULT 'Open',
             admin_reply TEXT,
-            created_at TEXT DEFAULT (datetime('now')),
-            FOREIGN KEY (student_id) REFERENCES students(id)
+            created_at TIMESTAMP DEFAULT NOW()
         )
     """)
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS admin (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
         )
     """)
 
-    # default admin: username=admin  password=admin123
-    cur.execute("SELECT * FROM admin WHERE username = ?", ("admin",))
+    cur.execute("SELECT * FROM admin WHERE username = %s", ("admin",))
     if not cur.fetchone():
         cur.execute(
-            "INSERT INTO admin (username, password) VALUES (?, ?)",
+            "INSERT INTO admin (username, password) VALUES (%s, %s)",
             ("admin", generate_password_hash("admin123")),
         )
 
     conn.commit()
+    cur.close()
     conn.close()
 
 
 if __name__ == "__main__":
     init_db()
-    print("Database initialized at", DB_PATH)
+    print("Database initialized (PostgreSQL/Supabase)")
