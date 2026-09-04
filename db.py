@@ -3,7 +3,11 @@ import os
 from werkzeug.security import generate_password_hash
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE, "placement.db")
+
+if os.environ.get("VERCEL"):
+    DB_PATH = "/tmp/placement.db"
+else:
+    DB_PATH = os.path.join(BASE, "placement.db")
 
 
 def get_db():
