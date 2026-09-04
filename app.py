@@ -10,7 +10,13 @@ from werkzeug.utils import secure_filename
 from db import get_db, init_db, DB_PATH
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE, "static", "uploads")
+
+if os.environ.get("VERCEL"):
+    UPLOAD_FOLDER = "/tmp/uploads"
+else:
+    UPLOAD_FOLDER = os.path.join(BASE, "static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 ALLOWED_EXT = {"pdf", "doc", "docx"}
 
 app = Flask(__name__)
