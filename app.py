@@ -61,6 +61,20 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/dbtest")
+def dbtest():
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("SELECT COUNT(*) as c FROM students")
+        result = cur.fetchone()
+        cur.close()
+        db.close()
+        return f"DB Connected! Students count: {result['c']}"
+    except Exception as e:
+        return f"DB Error: {str(e)}"
+
+
 # ============ STUDENT AUTH ============
 
 @app.route("/register", methods=["GET", "POST"])
